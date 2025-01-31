@@ -221,14 +221,15 @@ void loop() {
         if (++time_print_cnt >= 30) {
             snprintf(buf,
                      sizeof(buf),
-                     "gps-time: %02d:%02d:%02d  %02d.%02d.%02d  (%s)\n",
+                     "gps-time: %02d:%02d:%02d  %02d.%02d.%02d  (%d sats%s)\n",
                      gps.hour(),
                      gps.minute(),
                      gps.second(),
                      gps.day(),
                      gps.month(),
                      gps.year(),
-                     gps.is_fixed() ? "fixed" : "");
+                     gps.sat_in_view(),
+                     gps.is_fixed() ? ", fixed" : "");
             Serial.print(buf);
             logSocket.beginPacket(logDestination, LOG_PORT);
             logSocket.print(buf);

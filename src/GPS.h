@@ -19,6 +19,8 @@ class GPSDateTime {
     uint16_t month(void);
     uint16_t year(void);
 
+    int sat_in_view(void);
+
     DateTime GPSnow();
 
     int poll_serial();
@@ -29,11 +31,14 @@ class GPSDateTime {
 
     uint32_t time_;
     uint16_t year_, month_, day_;
+    int sat_in_view_;
 
     DateTime getZDA();
     int process_line();
 
   private:
+    int parse_rmc();
+    void parse_gsv();
     void set_time(String s_token);
     void set_date(String s_token);
     bool crc_check();

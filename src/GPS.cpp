@@ -16,6 +16,8 @@ uint16_t GPSDateTime::minute() { return (time_ / 10000) % 100; }
 
 uint16_t GPSDateTime::second() { return (time_ / 100) % 100; }
 
+int GPSDateTime::sat_in_view() { return sat_in_view_; }
+
 void GPSDateTime::set_date(String s_token) {
     // s_token = "310125"
     day_ = s_token.substring(0, 2).toInt();
@@ -47,21 +49,7 @@ bool GPSDateTime::crc_check() {
     return i_rx == xor_sum;
 }
 
-int GPSDateTime::process_line() {
-    // The last received line is now in serial_line
-    // $GPGSV,1,1,01,19,,,21*73
-    // $GPGGA,193903.00,,,,,0,00,99.99,,,,,,*67
-    // $GPGSV,1,1,01,16,,,30*7C
-    if (!serial_line.startsWith("$GPRMC,"))
-        return 1;
-
-    if (!crc_check())
-        return 1;
-
-    // $GPRMC,,V,,,,,,,,,,N*53
-    // $GPRMC,193903.00,V,,,,,,,300125,,,N*79
-    // $GPRMC,003934.00,V,,,,,,,310125,,,N*74
-
+int GPSDateTime::parse_rmc() {
     int i_start = 0;
     for (int i_token = 0; i_token <= 9; i_token++) {
         int i_end = serial_line.indexOf(",", i_start);
@@ -91,6 +79,47 @@ int GPSDateTime::process_line() {
 
         i_start = i_end + 1;
     }
+    return 1;
+}
+
+void GPSDateTime::parse_gsv() {
+    int i_start = 0;
+    for (int i_token = 0; i_token <= 3; i_token++) {
+        int i_end = serial_line.indexOf(",", i_start);
+        if (i_end < 0)
+            return;
+
+        String s_token = serial_line.substring(i_start, i_end);
+
+        // token 0: $GPGSV
+        // token 1: Total number of messages
+        // token 2: Message number
+        // token 3: Total number of SVs in view
+        if (i_token == 3) {
+            sat_in_view_ = s_token.toInt();
+            return;
+        }
+
+        i_start = i_end + 1;
+    }
+}
+
+int GPSDateTime::process_line() {
+    if (!crc_check())
+        return 1;
+
+    // The last received line is now in serial_line
+    // $GPGSV,1,1,01,19,,,21*73
+    // $GPGGA,193903.00,,,,,0,00,99.99,,,,,,*67
+    // $GPGSV,1,1,01,16,,,30*7C
+    // $GPRMC,,V,,,,,,,,,,N*53
+    // $GPRMC,193903.00,V,,,,,,,300125,,,N*79
+    // $GPRMC,003934.00,V,,,,,,,310125,,,N*74
+    // $GPGGA,,,,,,0,00,99.99,,,,,,*48
+    if (serial_line.startsWith("$GPRMC,"))
+        return parse_rmc();
+    else if (serial_line.startsWith("$GPGSV,"))
+        parse_gsv();
 
     return 1;
 }
