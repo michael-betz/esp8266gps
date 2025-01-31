@@ -8,14 +8,16 @@
 #include "NTPClock.h"
 #include "ClockPID.h"
 #include "NTPServer.h"
-#include "settings.h"
 #include "platform-clock.h"
 
+#define SSID "gps_time_for_free"
+#define SSID_PASS ""
+#define LOG_DESTINATION_IP "192.168.4.2"
+
+#define LOG_PORT 1234  // Remote Port
 #define BAUD_LOGGER 921600
 #define BAUD_GPS 9600
 #define PPSPIN 12
-
-#define LOG_PORT 1234  // Remote Port
 
 SoftwareSerial gps_serial(13, 4);  // RX, TX
 GPSDateTime gps(&gps_serial);
@@ -33,6 +35,7 @@ void IRAM_ATTR handleInterrupt() {
 }
 
 uint32_t compileTime;
+
 void setup() {
   DateTime compile = DateTime(__DATE__, __TIME__);
 
@@ -47,19 +50,20 @@ void setup() {
   compileTime = compile.ntptime();
   localClock.setTime(COUNTERFUNC(), compileTime);
   // allow for compile timezone to be 12 hours ahead
-  compileTime -= 12*60*60;
+  compileTime -= 12 * 60 * 60;
 
   Serial.print("\nAP mode at: ");
-  Serial.print(ssid);
+  Serial.print(SSID);
   Serial.print(", ");
-  WiFi.hostname(ssid);
-  WiFi.softAP(ssid, ssidPass);
+  WiFi.hostname(SSID);
+  WiFi.softAP(SSID, SSID_PASS);
   WiFi.setSleepMode(WIFI_NONE_SLEEP, 0);  // no sleeping for minimum latency
   Serial.println(WiFi.softAPIP());
 
-  logDestination.fromString(logDestinationIP);
-  ntpSocket.begin(123);  // local port 123
+  logDestination.fromString(LOG_DESTINATION_IP);
   logSocket.begin(LOG_PORT);
+
+  ntpSocket.begin(123);  // local port 123
 
   while(gps_serial.available()) { // throw away all the text received while starting up
     gps_serial.read();
@@ -208,10 +212,32 @@ void loop() {
 
   uint32_t cyclesNow = COUNTERFUNC();
   if((cyclesNow - lastUpdate) >= COUNTSPERSECOND) {
+    // every second
     uint32_t s, s_fb;
     // update the local clock's cycle count
     localClock.getTime(cyclesNow,&s,&s_fb);
     lastUpdate = cyclesNow;
+
+    static int time_print_cnt = 0;
+    if (++time_print_cnt >= 30) {
+      snprintf(buf, sizeof(buf),
+        "gps-time: %02d:%02d:%02d  %02d.%02d.%02d  (%s)\n",
+        gps.hour(),
+        gps.minute(),
+        gps.second(),
+        gps.day(),
+        gps.month(),
+        gps.year(),
+        gps.is_fixed() ? "fixed" : ""
+      );
+      Serial.print(buf);
+      logSocket.beginPacket(logDestination, LOG_PORT);
+      logSocket.print(buf);
+      logSocket.endPacket();
+
+      time_print_cnt = 0;
+    }
+
   }
 
   udp_rx_poll();
@@ -228,23 +254,6 @@ void loop() {
     }
   }
   if (ret & 0b10) {  // new time has been received
-    if ((gps.second() % 10) == 0) {
-      snprintf(buf, sizeof(buf),
-        "gps-time: %02d:%02d:%02d  %02d.%02d.%02d  (%d)\n",
-        gps.hour(),
-        gps.minute(),
-        gps.second(),
-        gps.day(),
-        gps.month(),
-        gps.year(),
-        gps.is_fixed()
-      );
-      Serial.print(buf);
-      logSocket.beginPacket(logDestination, LOG_PORT);
-      logSocket.print(buf);
-      logSocket.endPacket();
-    }
-
     uint32_t gpstime = gps.GPSnow().ntptime();
     if(gpstime > compileTime) {  // && gps.is_fixed()) {
       updateTime(gpstime);
