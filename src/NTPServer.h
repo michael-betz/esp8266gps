@@ -1,5 +1,9 @@
 #pragma once
 
+#include "NTPClock.h"
+#include "WiFiUdp.h"
+#include <stdint.h>
+
 #define NTP_LEAP_NONE 0
 #define NTP_LEAP_61S 1
 #define NTP_LEAP_59S 2

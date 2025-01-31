@@ -1,5 +1,9 @@
 #pragma once
 
+#include "DateTime.h"
+#include <Stream.h>
+#include <stdint.h>
+
 class GPSDateTime {
   public:
     GPSDateTime(Stream *gpsUart) : gpsUart_(gpsUart) {};

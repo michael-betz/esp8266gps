@@ -17,7 +17,7 @@ void NTPServer::poll() {
     }
 
     // drop too small packets
-    if (rec_length < sizeof(struct ntp_packet)) {
+    if (rec_length < (int)sizeof(struct ntp_packet)) {
         return;
     }
 

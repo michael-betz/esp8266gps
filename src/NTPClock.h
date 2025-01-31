@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 // depends on CPU byte order
 #define NTPCLOCK_SECONDS 1
 #define NTPCLOCK_FRACTIONAL 0
