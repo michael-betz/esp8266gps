@@ -1,0 +1,18 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"lsp_format_on_save": true,
+		"LSP": {
+			"clangd": {
+				"initializationOptions": {
+					"clangd.clang-tidy": 1
+				}
+			},
+		}
+	}
+}
