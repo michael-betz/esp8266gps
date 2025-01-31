@@ -7,6 +7,7 @@
 #include <ESP8266WiFi.h>
 #include <SoftwareSerial.h>
 #include <WiFiUdp.h>
+#include <cmath>
 #include <string>
 #include <thread>
 
@@ -240,6 +241,12 @@ void loop() {
     }
 
     udp_rx_poll();
+
+    // Forward serial port data directly to the GPS module
+    while (Serial.available()) {
+        gps_serial.write((char)Serial.read());
+        forward_nema = true;
+    }
 
     int ret = gps.poll_serial();
     if (ret & 0b01) {
