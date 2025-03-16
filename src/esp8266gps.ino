@@ -107,6 +107,8 @@ struct {
 
 void updateTime(uint32_t gpstime) {
   if(lastPPS == 0) {
+    // gpstime is seconds since 1/1/1900
+    localClock.setTime(COUNTERFUNC(), gpstime);
     return;
   }
 
@@ -228,22 +230,23 @@ void loop() {
     }
   }
   if (ret & 0b10) {  // new time has been received
-    if ((gps.second() % 10) == 0) {
+    // if ((gps.second() % 10) == 0) {
       snprintf(buf, sizeof(buf),
-        "gps-time: %02d:%02d:%02d  %02d.%02d.%02d  (%d)\n",
+        "gps-time: %02d:%02d:%02d  %02d.%02d.%02d  (%d, %d)\n",
         gps.hour(),
         gps.minute(),
         gps.second(),
         gps.day(),
         gps.month(),
         gps.year(),
+        gps.get_n_sats(),
         gps.is_fixed()
       );
       Serial.print(buf);
       logSocket.beginPacket(logDestination, LOG_PORT);
       logSocket.print(buf);
       logSocket.endPacket();
-    }
+    // }
 
     uint32_t gpstime = gps.GPSnow().ntptime();
     if(gpstime > compileTime) {  // && gps.is_fixed()) {

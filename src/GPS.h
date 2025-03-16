@@ -4,6 +4,8 @@ class GPSDateTime {
  public:
   GPSDateTime(Stream *gpsUart): gpsUart_(gpsUart) {  };
 
+  int get_n_sats();
+
   bool is_fixed(void);
   String getLine();
 
@@ -25,6 +27,8 @@ class GPSDateTime {
 
   uint32_t time_;
   uint16_t year_, month_, day_;
+
+  int n_sats;  // number of satellites in view
 
   DateTime getZDA();
   int process_line();

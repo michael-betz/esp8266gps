@@ -60,46 +60,70 @@ int GPSDateTime::process_line() {
   // $GPGSV,1,1,01,19,,,21*73
   // $GPGGA,193903.00,,,,,0,00,99.99,,,,,,*67
   // $GPGSV,1,1,01,16,,,30*7C
-  if (!serial_line.startsWith("$GPRMC,"))
+  if (!serial_line.startsWith("$GPRMC,") && !serial_line.startsWith("$GPGSV,"))
     return 1;
 
   if (!crc_check())
     return 1;
 
-  // $GPRMC,,V,,,,,,,,,,N*53
-  // $GPRMC,193903.00,V,,,,,,,300125,,,N*79
-  // $GPRMC,003934.00,V,,,,,,,310125,,,N*74
+  if (serial_line.startsWith("$GPRMC,")) {
+    // $GPRMC,,V,,,,,,,,,,N*53
+    // $GPRMC,193903.00,V,,,,,,,300125,,,N*79
+    // $GPRMC,003934.00,V,,,,,,,310125,,,N*74
 
-  int i_start = 0;
-  for (int i_token=0; i_token <= 9; i_token++) {
-    int i_end = serial_line.indexOf(",", i_start);
-    if (i_end < 0)
-      return 1;
+    int i_start = 0;
+    for (int i_token=0; i_token <= 9; i_token++) {
+      int i_end = serial_line.indexOf(",", i_start);
+      if (i_end < 0)
+        return 1;
 
-    String s_token = serial_line.substring(i_start, i_end);
+      String s_token = serial_line.substring(i_start, i_end);
 
-    // Serial.printf("token %d: %s\n", i_token, s_token.c_str());
-    // token 0: $GPRMC
-    // token 1: 010340.00
-    // token 2: V
-    // token 9: 310125
-    switch (i_token) {
-    case 1:
-      set_time(s_token);
-      break;
+      // Serial.printf("token %d: %s\n", i_token, s_token.c_str());
+      // token 0: $GPRMC
+      // token 1: 010340.00
+      // token 2: V
+      // token 9: 310125
+      switch (i_token) {
+      case 1:
+        set_time(s_token);
+        break;
 
-    case 2:
-      isGpsFix = s_token[0] == 'A';
-      break;
+      case 2:
+        isGpsFix = s_token[0] == 'A';
+        break;
 
-    case 9:
-      set_date(s_token);
-      return 0b11;
+      case 9:
+        set_date(s_token);
+        return 0b11;
+      }
+
+      i_start = i_end + 1;
     }
 
-    i_start = i_end + 1;
-  }
+    return 1;
+  } else if (serial_line.startsWith("$GPGSV,")) {
+    // $GPGSV,2,1,05,02,25,258,,10,63,118,20,23,39,053,,27,86,061,16*7D
+    int i_start = 0;
+    for (int i_token=0; i_token <= 3; i_token++) {
+      int i_end = serial_line.indexOf(",", i_start);
+      if (i_end < 0)
+        return 1;
 
+      String s_token = serial_line.substring(i_start, i_end);
+
+      // Serial.printf("token %d: %s\n", i_token, s_token.c_str());
+      // token 0: $GPGSV
+      // token 1: 2
+      // token 2: 1
+      // token 3: 05
+      if (i_token == 3) {
+        n_sats = atoi(s_token.c_str());
+      }
+
+      i_start = i_end + 1;
+    }
+  }
   return 1;
 }
 
@@ -125,6 +149,10 @@ int GPSDateTime::poll_serial() {
     }
   }
   return 0;
+}
+
+int GPSDateTime::get_n_sats(void) {
+  return n_sats;
 }
 
 bool GPSDateTime::is_fixed(void) {
