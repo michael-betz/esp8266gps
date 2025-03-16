@@ -3,6 +3,4 @@
 
 using namespace fakeit;
 
-void setUp() {
-  ArduinoFakeReset();
-}
+void setUp() { ArduinoFakeReset(); }

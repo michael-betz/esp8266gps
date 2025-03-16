@@ -17,13 +17,13 @@
 #define NTPPID_MAX_COUNT 16
 
 extern "C" {
-  struct deriv_calc {
+struct deriv_calc {
     float d, d_chisq;
-  };
+};
 
-  struct linear_result {
+struct linear_result {
     float a, b;
-  };
+};
 }
 
 class ClockPID_c {
@@ -45,10 +45,10 @@ class ClockPID_c {
     void reset_clock() { count = 0; }
 
   private:
-    uint32_t timestamps[NTPPID_MAX_COUNT]; // in microseconds
-    uint32_t realSeconds[NTPPID_MAX_COUNT]; // actual seconds
-    int32_t rawOffsets[NTPPID_MAX_COUNT]; // in microseconds
-    int64_t corrected_offsets[NTPPID_MAX_COUNT]; // in fractional ntp seconds
+    uint32_t timestamps[NTPPID_MAX_COUNT];        // in microseconds
+    uint32_t realSeconds[NTPPID_MAX_COUNT];       // actual seconds
+    int32_t rawOffsets[NTPPID_MAX_COUNT];         // in microseconds
+    int64_t corrected_offsets[NTPPID_MAX_COUNT];  // in fractional ntp seconds
 
     uint32_t count;
 

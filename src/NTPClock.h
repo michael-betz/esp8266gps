@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 // depends on CPU byte order
 #define NTPCLOCK_SECONDS 1
 #define NTPCLOCK_FRACTIONAL 0
@@ -21,8 +23,8 @@ class NTPClock {
     // lastMicros_ local time, ntpTimestamp_ real time
     uint32_t lastMicros_;
     union {
-      uint32_t units[2];
-      uint64_t whole;
+        uint32_t units[2];
+        uint64_t whole;
     } ntpTimestamp_, temp_;
     int32_t ppb_;
     uint32_t refTime_;
